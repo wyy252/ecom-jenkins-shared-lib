@@ -1,7 +1,7 @@
 def call(Map config = [:]) {
     pipeline {
         agent {
-            label 'docker-agent'
+        label 'docker-agent'
         }
 
         options {
@@ -46,7 +46,7 @@ def call(Map config = [:]) {
                     }
                 }
                 steps {
-                    sh "docker run --rm -v /var/run/docker.sock:/var/run/docker.sock -v ${env.WORKSPACE}:/workspace aquasec/trivy:0.57.1 fs --severity HIGH,CRITICAL --exit-code 0 /workspace > trivy-${SERVICE_NAME}.txt"
+                    sh ''trivy fs --severity HIGH,CRITICAL --exit-code 0 .''
                     archiveArtifacts artifacts: "trivy-${SERVICE_NAME}.txt", allowEmptyArchive: true
                 }
             }
