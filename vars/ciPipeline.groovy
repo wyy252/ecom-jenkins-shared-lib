@@ -46,7 +46,7 @@ def call(Map config = [:]) {
                     }
                 }
                 steps {
-                    sh ''trivy fs --severity HIGH,CRITICAL --exit-code 0 .''
+                    sh 'trivy fs --severity HIGH,CRITICAL --exit-code 0 .'
                     archiveArtifacts artifacts: "trivy-${SERVICE_NAME}.txt", allowEmptyArchive: true
                 }
             }
