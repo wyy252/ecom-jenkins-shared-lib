@@ -46,7 +46,7 @@ def call(Map config = [:]) {
                     }
                 }
                 steps {
-                    sh "docker run --rm -v ${env.WORKSPACE}:/project aquasec/trivy:0.57.1 fs --severity HIGH,CRITICAL --exit-code 0 --format table /project > trivy-fs-${SERVICE_NAME}.txt"
+                    sh "trivy fs --severity HIGH,CRITICAL --exit-code 0 --format table . > trivy-fs-${SERVICE_NAME}.txt"
                     archiveArtifacts artifacts: "trivy-fs-${SERVICE_NAME}.txt", allowEmptyArchive: true
                 }
             }
