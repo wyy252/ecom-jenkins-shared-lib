@@ -1,6 +1,8 @@
 def call(Map config = [:]) {
     pipeline {
-        agent any
+        agent {
+            label 'docker-agent'
+        }
 
         options {
             timestamps()
