@@ -1,7 +1,7 @@
 def call(Map config = [:]) {
     pipeline {
         agent {
-        label 'docker-agent'
+            label 'docker-agent'
         }
 
         options {
@@ -39,15 +39,15 @@ def call(Map config = [:]) {
                 }
             }
 
-            stage('Security Scan') {
+            stage('Filesystem Security Scan') {
                 when {
                     not {
                         changeRequest()
                     }
                 }
                 steps {
-                    sh 'trivy fs --severity HIGH,CRITICAL --exit-code 0 .'
-                    archiveArtifacts artifacts: "trivy-${SERVICE_NAME}.txt", allowEmptyArchive: true
+                    sh "docker run --rm -v ${env.WORKSPACE}:/project aquasec/trivy:0.57.1 fs --severity HIGH,CRITICAL --exit-code 0 --format table /project > trivy-fs-${SERVICE_NAME}.txt"
+                    archiveArtifacts artifacts: "trivy-fs-${SERVICE_NAME}.txt", allowEmptyArchive: true
                 }
             }
 
@@ -71,6 +71,28 @@ def call(Map config = [:]) {
                             sh "docker tag ${IMAGE_NAME}:${BUILD_TAG_NAME} ${IMAGE_NAME}:${RELEASE_TAG_NAME}"
                         }
                     }
+                }
+            }
+
+            stage('Container Security Gate') {
+                when {
+                    not {
+                        changeRequest()
+                    }
+                }
+                steps {
+                    script {
+                        if (env.BRANCH_NAME == 'develop') {
+                            sh """
+                                docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy:0.57.1 image --severity HIGH,CRITICAL --exit-code 0 --format table ${IMAGE_NAME}:${BUILD_TAG_NAME} > trivy-image-${SERVICE_NAME}.txt
+                            """
+                        } else if (env.BRANCH_NAME.startsWith('release/') || env.BRANCH_NAME == 'main') {
+                            sh """
+                                docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy:0.57.1 image --severity HIGH,CRITICAL --exit-code 1 --format table ${IMAGE_NAME}:${BUILD_TAG_NAME} > trivy-image-${SERVICE_NAME}.txt
+                            """
+                        }
+                    }
+                    archiveArtifacts artifacts: "trivy-image-${SERVICE_NAME}.txt", allowEmptyArchive: true
                 }
             }
 
